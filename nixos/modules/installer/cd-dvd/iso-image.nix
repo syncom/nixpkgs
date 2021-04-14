@@ -371,7 +371,13 @@ let
       echo "Image size: $image_size"
       truncate --size=$image_size "$out"
       ${pkgs.libfaketime}/bin/faketime "2000-01-01 00:00:00" ${pkgs.dosfstools}/sbin/mkfs.vfat -i 12345678 -n EFIBOOT "$out"
-      mcopy -psvm -i "$out" ./EFI ./boot ::
+      echo "[Debug] sha256sum $out: `sha256sum $out`"
+#      mcopy -psvm -i "$out" ./EFI ./boot ::
+      for d in $(find EFI -type d | sort); do echo "$d"; ${pkgs.libfaketime}/bin/faketime "2000-01-01 00:00:00" ${pkgs.mtools}/bin/mmd -i "$out" "::/$d"; done
+      for d in $(find boot -type d | sort); do echo "$d"; ${pkgs.libfaketime}/bin/faketime "2000-01-01 00:00:00" ${pkgs.mtools}/bin/mmd -i "$out" "::/$d"; done
+      for f in $(find EFI -type f | sort); do echo "$f"; ${pkgs.mtools}/bin/mcopy -pvm -i "$out" "$f" "::/$f"; done
+      for f in $(find boot -type f | sort); do echo "$f"; ${pkgs.mtools}/bin/mcopy -pvm -i "$out" "$f" "::/$f"; done
+      echo "[Debug] sha256sum $out: `sha256sum $out`"
       # Verify the FAT partition.
       ${pkgs.dosfstools}/sbin/fsck.vfat -vn "$out"
     ''; # */
